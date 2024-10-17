@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"> 
+    <title>留言板</title>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <style>
+        p{
+            word-break: break-all;
+            word-wrap: break-word;
+        }
+    </style>
+    <script>
+        // HTML ENCODE(in case defending html injection)
+        function HTMLEncode(html) {
+            var temp = document.createElement("div");
+            (temp.textContent != null) ? (temp.textContent = html) : (temp.innerText = html);
+            var output = temp.innerHTML;
+            temp = null;
+            return output;
+        }
+    </script>
+</head>
+
+<body>
+<!-- nav -->
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">留言板</a> 
+        <a class="navbar-brand" style="float:right;" href="login.html" id="nav-right">登录/注册</a>
+    </div>
+</nav>
+
+<div class="container">
+    <!-- summary -->
+    <div class="row clearfix">
+        <div class="col-md-12 column">
+            <div class="jumbotron">
+                <h2 class="text-center">
+                    留言板
+                </h2>
+                <p>
+                    这是徐靖开发的一个简单的留言板网站
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- display message -->
+    <div class="row clearfix">
+        <div class="col-md-12 column">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title text-center">
+                        留言内容
+                        <button class="btn btn-info" data-toggle="modal" data-target="#reply" onclick="start_comment(0)">点此留言</button>
+                    </h3>
+                    
+                </div>
+                <div class="panel-body" id="message_content">
+                    加载中
+                </div>
+                <button class="btn btn-default center-block" style="width:100%" onclick="get_more_comment()">
+                    点击加载更多
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- comment -->
+    <div class="modal fade" id="reply" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">我的留言</h4>
+                </div>
+                <div class="modal-body">
+                    <form name="message" id="message" method="post" action="comment.py">
+                        <textarea name="target" id="comment_target"class="hidden"></textarea>
+                        <textarea name="content" id="comment" class="form-control" rows="5" placeholder="在此输入您的留言内容"></textarea>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" onclick="submit()">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<script>
+    // comment&submit
+    
+    // which message now comment
+    var comment_target = 0;
+    
+    // change comment target
+    function start_comment(target){
+        comment_target = target;
+    }
+    
+    //submit comment
+    function submit(){
+        if(document.getElementById("comment").value.length<1){
+            window.alert("内容不能为空！")
+            return;
+        }
+        document.getElementById("comment_target").value = String(comment_target);
+        document.getElementById("message").submit();
+    }
+</script>
+
+<script>
+    // display comment&reply
+    
+    // how many comment now display
+    var display_comment_num = 0;
+    
+    // how many reply now display
+    var display_reply_num = new Array();
+    
+    // get reply to message
+    function get_reply(target){
+        if (window.XMLHttpRequest){
+            // code for IE7+, Firefox, Chrome, Opera, Safari
+            xmlhttp = new XMLHttpRequest();
+        }
+        else{
+            // code for IE6, IE5
+            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        
+        // send request
+        xmlhttp.open("POST","get_comment.py",false);
+        display_reply_num[String(target)] += 10;
+        xmlhttp.send(String(target) + "." + String(display_reply_num[String(target)]));
+        xmlDoc=xmlhttp.responseXML;
+        // assemble html
+        var html_content = ""
+        var inquiry_result = xmlDoc.getElementsByTagName("message");
+        for (i=0; i<inquiry_result.length;i++){
+            // head
+            html_content += [
+                "<div class=\"panel panel-info\">",
+                "<div class=\"panel-heading\">",
+                "<h3 class=\"panel-title text-center\">"
+            ].join('');
+            html_content += HTMLEncode(inquiry_result[i].getElementsByTagName("nickname")[0].childNodes[0].nodeValue) + "&nbsp" + inquiry_result[i].getElementsByTagName("comment_time")[0].childNodes[0].nodeValue;
+            
+            // content
+            html_content += "</h3></div><div class=\"panel-body\"><p>";
+            html_content += HTMLEncode(inquiry_result[i].getElementsByTagName("content")[0].childNodes[0].nodeValue);
+            html_content += "</p></div></div>";
+        }
+        // append
+        if (html_content == ""){
+            window.alert("已无更多回复！");
+            display_reply_num[String(target)]-=10
+        }
+        document.getElementById("reply"+String(target)).innerHTML = html_content + document.getElementById("reply"+String(target)).innerHTML;
+        document.getElementById("reply"+String(target)).setAttribute("class", "panel-collapse collapse in");
+    }
+
+    // get comment
+    // TODO: merge this function into get_reply
+    function get_more_comment(){
+        // compatiable
+        if (window.XMLHttpRequest){
+            // code for IE7+, Firefox, Chrome, Opera, Safari
+            xmlhttp = new XMLHttpRequest();
+        }
+        else{
+            // code for IE6, IE5
+            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        
+        // send request
+        xmlhttp.open("POST","get_comment.py",false);
+        display_comment_num += 10;
+        xmlhttp.send("0." + String(display_comment_num));
+        xmlDoc=xmlhttp.responseXML;
+        
+        // assemble html
+        var html_content = ""
+        var inquiry_result = xmlDoc.getElementsByTagName("message");
+        for (i=0; i<inquiry_result.length;i++)
+        {
+            // head
+            html_content += [
+                "<div class=\"panel panel-info\">",
+                "<div class=\"panel-heading\">",
+                "<h3 class=\"panel-title text-center\">"
+            ].join('');
+            html_content += HTMLEncode(inquiry_result[i].getElementsByTagName("nickname")[0].childNodes[0].nodeValue) + "&nbsp" + inquiry_result[i].getElementsByTagName("comment_time")[0].childNodes[0].nodeValue;
+            
+            // content
+            html_content += "</h3></div><div class=\"panel-body\"><p>";
+            html_content += HTMLEncode(inquiry_result[i].getElementsByTagName("content")[0].childNodes[0].nodeValue);
+            
+            // button & reply
+            var reply_id = String(inquiry_result[i].getElementsByTagName("message_id")[0].childNodes[0].nodeValue);
+            display_reply_num[reply_id] = 0;
+            html_content += [
+                "</p>",
+                "<button class=\"btn btn-default pull-right\"", 
+                " onclick=\"get_reply(" + reply_id + ")\">",
+                "点击查看",
+                inquiry_result[i].getElementsByTagName("reply_num")[0].childNodes[0].nodeValue,
+                "条回复</button>",
+                "<button class=\"btn btn-primary pull-right\" data-toggle=\"modal\" data-target=\"#reply\" onclick=\"start_comment(",
+                reply_id,
+                ")\">回复</button>",
+                "<br><br>",
+                // reply to comment
+                "<div id=\"",
+                "reply"+reply_id,
+                "\" class=\"panel-collapse collapse\">",
+                "<button class=\"btn btn-default center-block\" style=\"width:100%\"",
+                "onclick=\"get_reply(" + reply_id +")\">点击加载更多回复</button>",
+                "</div></div></div>"
+            ].join('');
+        }
+        
+        // append
+        if (display_comment_num==10){
+            document.getElementById("message_content").innerHTML = "";
+        }
+        if (html_content == ""){
+            window.alert("已无更多留言！");
+            display_comment_num-=10
+        }
+        document.getElementById("message_content").innerHTML += html_content;
+    }
+    
+    
+    // main
+    if (window.document.location.href.indexOf('?user=')!=-1){
+        nickname = decodeURI(window.document.location.href.split('?user=')[1]);
+        document.getElementById("nav-right").innerHTML = HTMLEncode("您好，" + nickname + " 用户档案");
+        document.getElementById("nav-right").href = 'profile.html?user=' + nickname;
+    }
+    get_more_comment();
+
+</script>
+                            
+</body>
+
+<footer class="footer">
+    <div class="container">
+        <span class="text-muted text-center">Copyright 徐靖 shiyuchongf@126.com</span>
+    </div>
+</footer>
+
+</html>

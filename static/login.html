@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8"> 
+    <title>登录/注册</title>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <style>
+        p{
+            word-break: break-all;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+
+
+<body>
+
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="index.html">留言板</a>   
+        <a class="navbar-brand" style="float:right;" href="index.html">回到主页</a>
+    </div>
+</nav>
+
+<br><br><br>
+<ul class="nav nav-tabs">
+    <li id='login_button' class="active"><a onclick="display_login()">登录</a></li>
+    <li id='register_button'><a onclick="display_register()">注册</a></li>
+</ul>
+
+<div style="padding: 100px 100px 10px;">
+    <form id="login" class="bs-example bs-example-form collapse in" method="post" action="login.py">
+        <div class="input-group">
+            <span class="input-group-addon">用户名</span>
+            <input type="text" class="form-control" placeholder="请输入用户名" id="log_name" name="user">
+        </div>
+        <br>
+        <div class="input-group">
+            <span class="input-group-addon">密码</span>
+            <input type="password" class="form-control" placeholder="请输入密码" id="log_pass" name="password">
+            <a class="input-group-addon" data-toggle="modal" data-target="#reset-modal">忘记密码</a>
+        </div>
+        
+        <br>
+        <div>
+            <button class="btn btn-primary pt-2" type="button" onclick="login()">登录</button>
+        </div>
+    </form>
+    
+    <form id="register" class="bs-example bs-example-form collapse" method="post" action="register.py">
+        <div class="input-group">
+            <span class="input-group-addon">用户名</span>
+            <input type="text" class="form-control" placeholder="1-6个字符" id="reg_name" name="user">
+        </div>
+        <br>
+        <div class="input-group">
+            <span class="input-group-addon">密码</span>
+            <input type="password" class="form-control" placeholder="6-12个字符" id="reg_pass" name="password">
+        </div>
+        <br>
+        <div class="input-group">
+            <span class="input-group-addon">电子邮箱</span>
+            <input type="text" class="form-control" placeholder="请输入邮箱地址" id="reg_mail" name="mail">
+            <span class="input-group-addon">.com</span>
+        </div>
+        <br>
+        <div>
+            <button type="button" class="btn btn-primary" onclick="register()">注册</button>
+        </div>
+    </form>
+    
+    <div class="modal fade" id="reset-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">重置密码</h4>
+                </div>
+                <div class="modal-body">
+                    <form name="reset" id="reset-pass" method="post" action="reset_password.py">
+                        <div class="input-group">
+                            <span class="input-group-addon">用户名</span>
+                            <input type="text" class="form-control" placeholder="1-6个字符" id="reset_name" name="user">
+                        </div><br>
+                        <div class="input-group">
+                            <span class="input-group-addon">电子邮箱</span>
+                            <input type="text" class="form-control" placeholder="请输入注册邮箱地址" id="reset_mail" name="mail">
+                            <span class="input-group-addon">.com</span>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" onclick="reset_pass()">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+</div>
+
+<script>
+    // display 
+    function display_login(){
+        document.getElementById('login').className = 'bs-example bs-example-form collapse in';
+        document.getElementById('register').className = 'bs-example bs-example-form collapse';
+        document.getElementById('login_button').className = 'active';
+        document.getElementById('register_button').className = '';
+    }
+    function display_register(){
+        document.getElementById('login').className = 'bs-example bs-example-form collapse';
+        document.getElementById('register').className = 'bs-example bs-example-form collapse in';
+        document.getElementById('login_button').className = '';
+        document.getElementById('register_button').className = 'active';
+    }
+    
+    // register
+    function register(){
+        if(document.getElementById('reg_name').value.length>6){
+            window.alert("用户名过长！");
+        }else if(document.getElementById('reg_name').value.length<1){
+            window.alert("用户名过短！");
+        }else if(document.getElementById('reg_pass').value.length<6){
+            window.alert("密码过短！");
+        }else if(document.getElementById('reg_pass').value.length>12){
+            window.alert("密码过长！");
+        }else if(document.getElementById('reg_mail').value.length<1){
+            window.alert("邮箱地址不可为空！");
+        }else if(document.getElementById('reg_name').value.indexOf('?user=')!=-1){
+            window.alert("请勿输入特殊字符（如'?','='）！");
+        }else{
+            document.getElementById('reg_mail').value += ".com"
+            document.getElementById("register").submit();
+        }
+    }
+    
+    // login
+    function login(){
+        if(document.getElementById('log_name').value.length>6){
+            window.alert("用户名过长！");
+        }else if(document.getElementById('log_name').value.length<1){
+            window.alert("用户名过短！");
+        }else if(document.getElementById('log_pass').value.length<6){
+            window.alert("密码过短！");
+        }else if(document.getElementById('log_pass').value.length>12){
+            window.alert("密码过长！");
+        }else{
+            document.getElementById("login").submit();
+        }
+    }
+    
+    // reset
+    function reset_pass(){
+        if(document.getElementById('reset_name').value.length>6){
+            window.alert("用户名过长！");
+        }else if(document.getElementById('reset_name').value.length<1){
+            window.alert("用户名过短！");
+        }else if(document.getElementById('reset_mail').value.length<1){
+            window.alert("邮箱地址不可为空！");
+        }else if(document.getElementById('reset_name').value.indexOf('?user=')!=-1){
+            window.alert("请勿输入特殊字符（如'?','='）！");
+        }else{
+            document.getElementById('reset_mail').value += ".com"
+            document.getElementById("reset-pass").submit();
+        }
+    }
+    
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8"> 
+    <title>个人资料</title>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script>
+        // HTML ENCODE(in case defending html injection)
+        function HTMLEncode(html) {
+            var temp = document.createElement("div");
+            (temp.textContent != null) ? (temp.textContent = html) : (temp.innerText = html);
+            var output = temp.innerHTML;
+            temp = null;
+            return output;
+        }
+    </script>
+</head>
+
+
+<body>
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <a class="navbar-brand" id="nav-back">留言板</a>   
+        <a class="navbar-brand" style="float:right;" href="index.html" onclick="logout()">登出</a>
+        <a class="navbar-brand" style="float:right;" id="nav-name">用户名</a>
+    </div>
+</nav>
+<br><br><br>
+<div class="container">
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h3 class="panel-title text-center">
+                用户档案
+            </h3>
+        </div>
+        <div class="panel-body" id="message_content">
+            <div class="input-group">
+                <span class="input-group-addon">用户名</span>
+                <input type="text" class="form-control" placeholder="加载中" id="name" disabled>
+            </div>
+            <br>
+            <div class="input-group">
+                <span class="input-group-addon">邮箱地址</span>
+                <input type="text" class="form-control" placeholder="加载中" id="mail" disabled>
+            </div>
+            <br>
+            <button class="btn btn-primary" data-toggle="modal" data-target="#change-pass">修改密码</button>
+        </div>
+    </div>
+</div>
+
+<!-- change password -->
+<div class="modal fade" id="change-pass" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">修改密码</h4>
+            </div>
+            <div class="modal-body">
+                <form name="password" id="password" method="post" action="change_password.py">
+                    <div class="input-group">
+                        <span class="input-group-addon">原密码</span>
+                        <input type="password" class="form-control" id="password_old" name="password_old">
+                    </div><br>
+                    <div class="input-group">
+                        <span class="input-group-addon">新密码</span>
+                        <input type="password" class="form-control" id="password_new" name="password_new" placeholder="请输入6-12个字符">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" onclick="submit()">提交</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // logout
+    function logout(){
+        // clear cookies
+        var exp = new Date();
+        exp.setTime(exp.getTime() - 1);
+        document.cookie= "user=1&0;expires="+exp.toGMTString();
+    }
+    
+    function submit(){
+        if(document.getElementById('password_old').value.length<1){
+            window.alert("请输入原始密码");
+        }else if(document.getElementById('password_new').value.length<6){
+            window.alert("新密码过短！");
+        }else if(document.getElementById('password_new').value.length>12){
+            window.alert("新密码过长！");
+        }
+        document.getElementById("password").submit();
+        
+    }
+    
+    function refresh(nickname){
+        // return True if success
+        // return False otherwise
+        
+        if (window.XMLHttpRequest){
+            // code for IE7+, Firefox, Chrome, Opera, Safari
+            xmlhttp = new XMLHttpRequest();
+        }else{
+            // code for IE6, IE5
+            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+            
+        // send request
+        xmlhttp.open("POST","profile.py",false);
+        xmlhttp.send();
+        
+        xmlDoc=xmlhttp.responseXML;
+        
+        // deal different status
+        var status = xmlDoc.getElementsByTagName("status")[0].childNodes[0].nodeValue;
+        if(status=="Valid Fail"){
+            window.alert("登录已过期！请重新登录。");
+            return false;
+        }else if(status=="Invalid User"){
+            window.alert("用户不存在!请重新登录。");
+            return false;
+        }else if(status=="OK"){
+            if(nickname!=xmlDoc.getElementsByTagName("name")[0].childNodes[0].nodeValue){
+                window.alert("你不是"+nickname+"!请重新登录。。");
+                return false;
+            }else{
+                document.getElementById("mail").value = HTMLEncode(xmlDoc.getElementsByTagName("email")[0].childNodes[0].nodeValue);
+                return true;
+            }
+        }else{
+            window.alert("服务器出错！请重新登录。");
+            return false
+        }
+    }
+    
+    // main
+    if (window.document.location.href.indexOf('?user=')!=-1){
+        var nickname = decodeURI(window.document.location.href.split('?user=')[1]);
+        if(refresh(nickname)){
+            document.getElementById("nav-name").innerHTML = HTMLEncode(nickname);
+            document.getElementById("name").value = nickname;
+            document.getElementById("nav-back").href = '/index.html?user=' + nickname;
+        }else{
+            window.location.href="/login.html";
+        }
+    }else{
+        window.alert("未登录！");
+        window.location.href="/login.html";
+    }
+    
+</script>
+
+</body>
+
+</html>
